@@ -5,15 +5,16 @@ import random
 from datetime import datetime
 import smtplib
 from email.message import EmailMessage
+import traceback
 
-# إعداد الصفحة
+# إعدادات الصفحة
 st.set_page_config(
     page_title="SmartDrive - تقرير القيادة الذكية",
     page_icon="🚗",
     layout="centered"
 )
 
-# توليد البيانات
+# توليد البيانات العشوائية
 def generate_metrics():
     return {
         "القيادة الذكية": random.randint(60, 100),
@@ -24,85 +25,137 @@ def generate_metrics():
         "الكفاءة في الوقود": random.randint(50, 100)
     }
 
-# رسم الرسوم
+# إنشاء الرسوم البيانية
 def create_charts(metrics):
-    fig1, ax1 = plt.subplots(figsize=(6,6))
-    ax1.pie(metrics.values(), labels=metrics.keys(), autopct='%1.1f%%',
-            colors=['#08F7FE', '#FE53BB', '#F5D300', '#00ff00', '#9d4edd', '#ff6d00'])
-    st.pyplot(fig1)
+    try:
+        # رسم بياني دائري
+        fig1, ax1 = plt.subplots(figsize=(6, 6))
+        ax1.pie(metrics.values(), labels=metrics.keys(), autopct='%1.1f%%',
+                colors=['#08F7FE', '#FE53BB', '#F5D300', '#00ff00', '#9d4edd', '#ff6d00'])
+        st.pyplot(fig1)
 
-    fig2, ax2 = plt.subplots(figsize=(8,4))
-    bars = ax2.bar(metrics.keys(), metrics.values(), color=['#08F7FE', '#FE53BB', '#F5D300', '#00ff00', '#9d4edd', '#ff6d00'])
-    ax2.set_ylim(0, 110)
-    for bar in bars:
-        height = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width()/2., height, f'{height}%', ha='center', va='bottom')
-    st.pyplot(fig2)
+        # رسم بياني عمودي
+        fig2, ax2 = plt.subplots(figsize=(8, 4))
+        bars = ax2.bar(metrics.keys(), metrics.values(), 
+                      color=['#08F7FE', '#FE53BB', '#F5D300', '#00ff00', '#9d4edd', '#ff6d00'])
+        ax2.set_ylim(0, 110)
+        for bar in bars:
+            height = bar.get_height()
+            ax2.text(bar.get_x() + bar.get_width()/2., height, f'{height}%', 
+                    ha='center', va='bottom')
+        st.pyplot(fig2)
+    except Exception as e:
+        st.error(f"خطأ في الرسوم البيانية: {str(e)}")
 
-# إنشاء PDF
+# إنشاء ملف PDF
 def generate_pdf(metrics, tip):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 24)
-    pdf.cell(0, 15, "SmartDrive - تقرير القيادة الذكية", ln=True, align='C')
-    pdf.set_font("Arial", '', 16)
-    pdf.cell(0, 10, "النموذج الأولي - بيانات محاكاة عشوائية", ln=True, align='C')
-    pdf.ln(15)
-    pdf.set_font("Arial", 'B', 18)
-    pdf.cell(0, 10, "النتائج التفصيلية:", ln=True)
-    pdf.set_font("Arial", '', 14)
-    for key, value in metrics.items():
-        pdf.cell(0, 10, f"{key}: {value}%", ln=True)
-    pdf.ln(10)
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, "نصيحة القيادة الذكية:", ln=True)
-    pdf.set_font("Arial", '', 14)
-    pdf.multi_cell(0, 10, tip)
-    pdf.ln(10)
-    pdf.set_font("Arial", 'I', 12)
-    pdf.cell(0, 10, f"تاريخ التقرير: {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=True)
-    return pdf.output(dest="S").encode("latin1")
-
-# إرسال البريد
-def send_email(receiver_email, pdf_bytes):
-    sender_email = "your_email@gmail.com"
-    sender_password = "your_app_password"
-    msg = EmailMessage()
-    msg['Subject'] = "تقرير القيادة الذكية من SmartDrive"
-    msg['From'] = sender_email
-    msg['To'] = receiver_email
-    msg.set_content("مرحبًا، تجد في المرفقات تقرير القيادة الذكية الخاص بك.\n\nتحيات SmartDrive 🚗")
-    msg.add_attachment(pdf_bytes, maintype='application', subtype='pdf', filename="smartdrive_report.pdf")
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-        smtp.login(sender_email, sender_password)
-        smtp.send_message(msg)
-
-# واجهة المستخدم
-st.title("🚗 SmartDrive - تقرير القيادة الذكية")
-user_email = st.text_input("📧 أدخل بريدك الإلكتروني لاستلام التقرير:")
-if st.button("🎯 توليد وإرسال التقرير"):
-    if not user_email:
-        st.warning("يرجى إدخال بريد إلكتروني صالح.")
-    else:
-        metrics = generate_metrics()
-        weakest = min(metrics, key=metrics.get)
-        tip = f"نصيحة: حاول تحسين مهارة {weakest} لتحقيق قيادة أفضل!"
-        st.subheader("📊 نتائج التحليل")
-        create_charts(metrics)
-        st.subheader("📝 التفاصيل")
+    try:
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.add_font('Arial', '', 'arial.ttf', uni=True)  # دعم العربية
+        
+        pdf.set_font("Arial", 'B', 24)
+        pdf.cell(0, 15, "SmartDrive - تقرير القيادة الذكية", ln=True, align='C')
+        
+        pdf.set_font("Arial", '', 16)
+        pdf.cell(0, 10, "النموذج الأولي - بيانات محاكاة", ln=True, align='C')
+        pdf.ln(15)
+        
+        pdf.set_font("Arial", 'B', 18)
+        pdf.cell(0, 10, "النتائج:", ln=True)
+        
+        pdf.set_font("Arial", '', 14)
         for key, value in metrics.items():
-            st.markdown(f"• *{key}*: {value}%")
-        st.subheader("💡 نصيحة القيادة")
-        st.info(tip)
-        pdf_bytes = generate_pdf(metrics, tip)
-        try:
-            send_email(user_email, pdf_bytes)
-            st.success(f"✅ تم إرسال التقرير إلى {user_email}")
-        except Exception as e:
-            st.error(f"❌ خطأ أثناء الإرسال: {e}")
-        st.download_button(
-            label="⬇ تحميل التقرير PDF",
-            data=pdf_bytes,
-            file_name="smartdrive_report.pdf",
-            mime="application/pdf"
+            pdf.cell(0, 10, f"{key}: {value}%", ln=True)
+        
+        pdf.ln(10)
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(0, 10, "النصيحة:", ln=True)
+        pdf.set_font("Arial", '', 14)
+        pdf.multi_cell(0, 10, tip)
+        
+        pdf.ln(10)
+        pdf.set_font("Arial", 'I', 12)
+        pdf.cell(0, 10, f"التاريخ: {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=True)
+        
+        return pdf.output(dest="S").encode("latin1")
+    except Exception as e:
+        st.error(f"خطأ في إنشاء PDF: {str(e)}")
+        return None
+
+# إرسال البريد الإلكتروني
+def send_email(receiver_email, pdf_bytes):
+    try:
+        # ⚠ استبدل هذه القيم ببياناتك (استخدم "App Password" من جيميل)
+        sender_email = "smartdrive.report@gmail.com"
+        sender_password = "owjj okgp ljbl gztg"
+        
+        if not sender_email or sender_password == "your_app_password_here":
+            raise ValueError("❗ لم تكتمل إعدادات البريد")
+            
+        msg = EmailMessage()
+        msg['Subject'] = "تقرير القيادة الذكية"
+        msg['From'] = sender_email
+        msg['To'] = receiver_email
+        msg.set_content("""
+        مرحبًا،
+        تجد مرفقًا تقرير قيادتك الذكية.
+        شكرًا لاستخدامك SmartDrive! 🚗
+        """)
+        
+        msg.add_attachment(
+            pdf_bytes,
+            maintype='application',
+            subtype='pdf',
+            filename="smartdrive_report.pdf"
         )
+        
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(sender_email, sender_password)
+            smtp.send_message(msg)
+        return True
+    except Exception as e:
+        st.error(f"❌ فشل الإرسال: {str(e)}")
+        st.text(traceback.format_exc())
+        return False
+
+# الواجهة الرئيسية
+def main():
+    st.title("🚗 SmartDrive - تقرير القيادة الذكية")
+    
+    with st.form("report_form"):
+        user_email = st.text_input("📧 أدخل بريدك الإلكتروني:")
+        submitted = st.form_submit_button("🎯 إنشاء التقرير")
+        
+        if submitted:
+            if not user_email:
+                st.warning("⚠ الرجاء إدخال بريد إلكتروني صحيح")
+            else:
+                with st.spinner("جارٍ إنشاء التقرير..."):
+                    try:
+                        metrics = generate_metrics()
+                        weakest = min(metrics, key=metrics.get)
+                        tip = f"نصيحة: ركز على تحسين {weakest} ({metrics[weakest]}%)"
+                        
+                        st.subheader("📊 النتائج")
+                        create_charts(metrics)
+                        
+                        st.subheader("💡 النصيحة")
+                        st.success(tip)
+                        
+                        pdf_bytes = generate_pdf(metrics, tip)
+                        if pdf_bytes:
+                            st.download_button(
+                                label="⬇ تحميل PDF",
+                                data=pdf_bytes,
+                                file_name="smartdrive_report.pdf",
+                                mime="application/pdf"
+                            )
+                            
+                            if send_email(user_email, pdf_bytes):
+                                st.success(f"✅ تم الإرسال إلى: {user_email}")
+                    except Exception as e:
+                        st.error(f"حدث خطأ: {str(e)}")
+
+if _name_ == "_main_":
+    main()
