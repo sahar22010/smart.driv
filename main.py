@@ -156,6 +156,5 @@ def main():
                                 st.success(f"✅ تم الإرسال إلى: {user_email}")
                     except Exception as e:
                         st.error(f"حدث خطأ: {str(e)}")
-
-if __name__== "__main__":
-    main()
+                    if __name__== "__main__":
+                            main()
