@@ -1,5 +1,0 @@
-streamlit==1.27.0
-matplotlib==3.7.1
-fpdf2==1.7.6
-smtplib==0.0.1
-python-dotenv==1.0.0
